@@ -23,12 +23,4 @@ if (app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 
-builder.Services.AddDbContextFactory<SpendLensDbContext>(h =>
-{
-    var connectionString = builder.Configuration.GetConnectionString(SpendLensDbContext.OptionName);
-    var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
-    var dataSource = dataSourceBuilder.Build();
-    h.UseNpgsql(dataSource);
-});
-
 await app.RunAsync();
