@@ -3,16 +3,15 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SpendLensDatabase.Models;
 
-[Serializable]
 public class Membership
 {
-    public required Guid UserId { get; set; }
-    public required Guid OrganizationId { get; set; }
+    public required Guid UserId { get; init; }
+    public required Guid OrganizationId { get; init; }
     
-    public required MembershipRole Role { get; set; }
-    public bool IsDeleted { get; set; }
-    public User User { get; set; } = null!;
-    public Organization Organization { get; set; } = null!;
+    public required MembershipRole Role { get; init; }
+    public bool IsDeleted { get; init; }
+    public User User { get; init; } = null!;
+    public Organization Organization { get; init; } = null!;
 }
 
 file sealed class MembershipConfiguration : IEntityTypeConfiguration<Membership>

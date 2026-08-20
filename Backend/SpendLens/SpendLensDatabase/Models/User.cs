@@ -1,18 +1,15 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SpendLensDatabase.Models;
 
-
-[Serializable]
 public class User
 {
-    public Guid Id { get; set; }
-    public required string Email { get; set; }
-    public required string PasswordHash { get; set; }
-    public required DateTime CreatedAt { get; set; }
-    public ICollection<Membership> Memberships { get; set; } = [];
+    public Guid Id { get; init; }
+    public required string Email { get; init; }
+    public required string PasswordHash { get; init; }
+    public required DateTime CreatedAt { get; init; }
+    public ICollection<Membership> Memberships { get; init; } = [];
 }
 
 file sealed class UserConfigure: IEntityTypeConfiguration<User>
