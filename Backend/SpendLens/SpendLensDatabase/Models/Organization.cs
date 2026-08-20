@@ -1,19 +1,16 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SpendLensDatabase.Models;
 
-[Serializable]
 public class Organization
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     
-    public required string Name { get; set; }
+    public required string Name { get; init; }
     
-    public required DateTime CreatedAt { get; set; }
-    public ICollection<Membership> Memberships { get; set; } = [];
+    public required DateTime CreatedAt { get; init; }
+    public ICollection<Membership> Memberships { get; init; } = [];
 }
 
 file sealed class OrganizationConfigure: IEntityTypeConfiguration<Organization>
