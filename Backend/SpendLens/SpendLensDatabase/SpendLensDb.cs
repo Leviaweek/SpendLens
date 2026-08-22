@@ -1,17 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SpendLensDatabase.Models;
+using SpendLensDatabase.Models.Auth;
+using SpendLensDatabase.Models.Auth.Organization;
+using SpendLensDatabase.Models.Auth.User;
 
 
 namespace SpendLensDatabase;
 
 public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
 {
-    public async Task<RegisterResult> CreateAuthModelsAsync(CreateAuthCommand command, CancellationToken cancellationToken)
+    public async Task<RegisterResult> CreateAuthModelsAsync(RegistrationModel data, CancellationToken cancellationToken)
     {
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
     
-        var email = command.User.Email.ToLowerInvariant();
+        var email = data.User.Email.ToLowerInvariant();
         
         var user = await context.Users
             .Where(u => u.Email == email)
@@ -24,7 +27,7 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
         {
             Id = Guid.CreateVersion7(),
             Email = email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(command.User.Password),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(data.User.Password),
             CreatedAt = DateTime.UtcNow
         };
 
@@ -32,7 +35,7 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
         {
             Id = Guid.CreateVersion7(),
             CreatedAt = DateTime.UtcNow,
-            Name = command.Organization.Name,
+            Name = data.Organization.Name,
         };
 
         var membership = new Membership

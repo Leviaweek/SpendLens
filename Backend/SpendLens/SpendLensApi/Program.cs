@@ -7,9 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using SpendLensApi;
-using SpendLensApi.Models;
 using SpendLensDatabase;
-using SpendLensDatabase.Models;
+using SpendLensDatabase.Models.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,15 +59,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapPost("/api/auth/register", async Task<Results<Created, Conflict>> ([FromBody] RegisterRequest request,
-    SpendLensDb db, CancellationToken cancellationToken) =>
+app.MapPost("/api/auth/register", async Task<Results<Created, Conflict>> 
+    ([FromBody] RegistrationModel request,
+    SpendLensDb db, 
+    CancellationToken cancellationToken) =>
 {
-    var result = await db.CreateAuthModelsAsync(
-        new CreateAuthCommand(
-            new CreateUserCommand(request.User.Email, request.User.Password),
-            new CreateOrganizationCommand(request.Organization.Name)
-        ), cancellationToken
-    );
+    var result = await db.CreateAuthModelsAsync(request, cancellationToken);
 
     return result switch
     {

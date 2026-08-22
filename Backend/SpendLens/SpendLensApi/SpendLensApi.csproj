@@ -28,4 +28,8 @@
       <ProjectReference Include="..\SpendLensDatabase\SpendLensDatabase.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Models\" />
+    </ItemGroup>
+
 </Project>
