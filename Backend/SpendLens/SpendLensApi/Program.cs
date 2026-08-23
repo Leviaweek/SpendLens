@@ -9,6 +9,7 @@ using Npgsql;
 using SpendLensApi;
 using SpendLensDatabase;
 using SpendLensDatabase.Models.Auth;
+using SpendLensDatabase.Models.Auth.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,13 @@ builder.Services.AddScoped<SpendLensDb>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<JwtService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -59,19 +67,35 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapPost("/api/auth/register", async Task<Results<Created, Conflict>> 
-    ([FromBody] RegistrationModel request,
-    SpendLensDb db, 
-    CancellationToken cancellationToken) =>
+app.MapPost("/api/auth/register", async Task<Results<Created<UserDto>, Conflict, ProblemHttpResult>> 
+    ([FromBody] RegistrationModel request, 
+        [FromServices] JwtService jwtService,
+        [FromServices] SpendLensDb db, 
+        HttpContext http,
+        CancellationToken cancellationToken) =>
 {
     var result = await db.CreateAuthModelsAsync(request, cancellationToken);
 
     return result switch
     {
-        RegisterResult.Success => TypedResults.Created(),
+        RegisterResult.Success success => Success(success, jwtService, http),
         RegisterResult.EmailTaken => TypedResults.Conflict(),
-        _ => throw new UnreachableException()
+        _ => TypedResults.Problem()
     };
+
+    static Created<UserDto> Success(RegisterResult.Success success, JwtService jwtService, HttpContext http)
+    {
+        var token = jwtService.GenerateToken(success.User.Id.ToString("N"), success.User.Email);
+        
+        http.Response.Cookies.Append(JwtService.CookieName, token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax
+        });
+        
+        return TypedResults.Created($"/users/{success.User.Id:N}", success.User);
+    }
 });
 
 app.UseAuthentication();

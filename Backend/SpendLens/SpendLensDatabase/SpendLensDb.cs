@@ -44,7 +44,7 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
             UserId = newUser.Id,
             Role = MembershipRole.Owner
         };
-    
+
         context.Users.Add(newUser);
         context.Organizations.Add(newOrganization);
         context.Memberships.Add(membership);
@@ -57,6 +57,7 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
         {
             return new RegisterResult.EmailTaken();
         }
-        return new RegisterResult.Success(newUser.Id);
+        var userDto = new UserDto(newUser.Id, newUser.Email, newUser.CreatedAt);
+        return new RegisterResult.Success(userDto);
     }
 }
