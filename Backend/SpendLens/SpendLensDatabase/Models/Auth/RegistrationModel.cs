@@ -1,5 +1,5 @@
 using SpendLensDatabase.Models.Auth.Organization;
-using SpendLensDatabase.Models.Auth.User;
+using SpendLensDatabase.Models.Auth.Users;
 
 namespace SpendLensDatabase.Models.Auth;
 

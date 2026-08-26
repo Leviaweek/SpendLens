@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -9,7 +8,7 @@ using Npgsql;
 using SpendLensApi;
 using SpendLensDatabase;
 using SpendLensDatabase.Models.Auth;
-using SpendLensDatabase.Models.Auth.User;
+using SpendLensDatabase.Models.Auth.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,11 +86,19 @@ app.MapPost("/api/auth/register", async Task<Results<Created<UserDto>, Conflict,
     {
         var token = jwtService.GenerateToken(success.User.Id.ToString("N"), success.User.Email);
         
-        http.Response.Cookies.Append(JwtService.CookieName, token, new CookieOptions
+        http.Response.Cookies.Append(JwtService.AccessCookieName, token, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Lax
+        });
+        
+        http.Response.Cookies.Append(JwtService.RefreshTokenCookieName, success.RawToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Path = "/api/auth",
         });
         
         return TypedResults.Created($"/users/{success.User.Id:N}", success.User);

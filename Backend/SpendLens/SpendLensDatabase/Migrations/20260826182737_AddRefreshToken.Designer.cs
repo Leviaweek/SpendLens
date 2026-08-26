@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SpendLensDatabase;
@@ -11,9 +12,11 @@ using SpendLensDatabase;
 namespace SpendLensDatabase.Migrations
 {
     [DbContext(typeof(SpendLensDbContext))]
-    partial class SpendLensDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826182737_AddRefreshToken")]
+    partial class AddRefreshToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

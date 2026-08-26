@@ -10,7 +10,8 @@ namespace SpendLensApi;
 public sealed class JwtService(IOptions<JwtOptions> options)
 {
     private readonly JwtOptions _jwtOptions = options.Value;
-    public const string CookieName = "accessToken";
+    public const string AccessCookieName = "accessToken";
+    public const string RefreshTokenCookieName = "refreshToken";
 
     public string GenerateToken(string userId, string email)
     {

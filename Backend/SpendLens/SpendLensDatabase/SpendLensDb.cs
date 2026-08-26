@@ -3,7 +3,7 @@ using Npgsql;
 using SpendLensDatabase.Models;
 using SpendLensDatabase.Models.Auth;
 using SpendLensDatabase.Models.Auth.Organization;
-using SpendLensDatabase.Models.Auth.User;
+using SpendLensDatabase.Models.Auth.Users;
 
 
 namespace SpendLensDatabase;
@@ -45,9 +45,21 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
             Role = MembershipRole.Owner
         };
 
+        var (rawToken, tokenId, verifierHash) = RefreshTokenGenerator.Generate();
+
+        var refreshToken = new RefreshToken
+        {
+            Id = tokenId,
+            UserId = newUser.Id,
+            TokenHash = verifierHash,
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            RevokedAt = null
+        };
+        
         context.Users.Add(newUser);
         context.Organizations.Add(newOrganization);
         context.Memberships.Add(membership);
+        context.RefreshTokens.Add(refreshToken);
 
         try
         {
@@ -58,6 +70,6 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
             return new RegisterResult.EmailTaken();
         }
         var userDto = new UserDto(newUser.Id, newUser.Email, newUser.CreatedAt);
-        return new RegisterResult.Success(userDto);
+        return new RegisterResult.Success(userDto, rawToken);
     }
 }

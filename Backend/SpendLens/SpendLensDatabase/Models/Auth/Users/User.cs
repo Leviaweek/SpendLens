@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace SpendLensDatabase.Models.Auth.User;
+namespace SpendLensDatabase.Models.Auth.Users;
 
 public class User
 {
@@ -33,6 +33,6 @@ file sealed class UserConfigure: IEntityTypeConfiguration<User>
         
         builder.Property(u => u.CreatedAt)
             .IsRequired()
-            .HasConversion(dw => DateTime.SpecifyKind(dw, DateTimeKind.Utc), dw => dw);
+            .HasConversion(dw => DateTime.SpecifyKind(dw, DateTimeKind.Utc), dr => dr);
     }
 }
