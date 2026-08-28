@@ -1,14 +1,10 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using SpendLensApi;
 using SpendLensDatabase;
-using SpendLensDatabase.Models.Auth;
-using SpendLensDatabase.Models.Auth.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,44 +62,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapPost("/api/auth/register", async Task<Results<Created<UserDto>, Conflict, ProblemHttpResult>> 
-    ([FromBody] RegistrationModel request, 
-        [FromServices] JwtService jwtService,
-        [FromServices] SpendLensDb db, 
-        HttpContext http,
-        CancellationToken cancellationToken) =>
-{
-    var result = await db.CreateAuthModelsAsync(request, jwtOptions.RefreshTokenExpirationDays,cancellationToken);
-
-    return result switch
-    {
-        RegisterResult.Success success => Success(success, jwtService, http),
-        RegisterResult.EmailTaken => TypedResults.Conflict(),
-        _ => TypedResults.Problem()
-    };
-
-    static Created<UserDto> Success(RegisterResult.Success success, JwtService jwtService, HttpContext http)
-    {
-        var token = jwtService.GenerateToken(success.User.Id.ToString("N"), success.User.Email);
-        
-        http.Response.Cookies.Append(JwtService.AccessCookieName, token, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Lax
-        });
-        
-        http.Response.Cookies.Append(JwtService.RefreshTokenCookieName, success.RawToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Lax,
-            Path = "/api/auth",
-        });
-        
-        return TypedResults.Created($"/users/{success.User.Id:N}", success.User);
-    }
-});
+app.MapAuthEndpoints();
 
 app.UseAuthentication();
 app.UseAuthorization();
