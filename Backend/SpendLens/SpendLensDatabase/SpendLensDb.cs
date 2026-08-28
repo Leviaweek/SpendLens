@@ -11,7 +11,7 @@ namespace SpendLensDatabase;
 public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
 {
     public async Task<RegisterResult> CreateAuthModelsAsync(RegistrationModel data,
-        int refreshTokenLifetime,
+        TimeSpan refreshTokenLifetime,
         CancellationToken cancellationToken)
     {
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
@@ -47,21 +47,11 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
             Role = MembershipRole.Owner
         };
 
-        var (rawToken, tokenId, verifierHash) = RefreshTokenGenerator.Generate();
+        var rawToken = AddRefreshToken(refreshTokenLifetime, newUser, context);
 
-        var refreshToken = new RefreshToken
-        {
-            Id = tokenId,
-            UserId = newUser.Id,
-            TokenHash = verifierHash,
-            ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenLifetime),
-            RevokedAt = null
-        };
-        
         context.Users.Add(newUser);
         context.Organizations.Add(newOrganization);
         context.Memberships.Add(membership);
-        context.RefreshTokens.Add(refreshToken);
 
         try
         {
@@ -73,5 +63,49 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
         }
         var userDto = new UserDto(newUser.Id, newUser.Email, newUser.CreatedAt);
         return new RegisterResult.Success(userDto, rawToken);
+    }
+
+    private static string AddRefreshToken(TimeSpan refreshTokenLifetime, User user, SpendLensDbContext context)
+    {
+        var (rawToken, tokenId, verifierHash) = RefreshTokenGenerator.Generate();
+
+        var refreshToken = new RefreshToken
+        {
+            Id = tokenId,
+            UserId = user.Id,
+            TokenHash = verifierHash,
+            ExpiresAt = DateTime.UtcNow.Add(refreshTokenLifetime),
+            RevokedAt = null
+        };
+        
+        context.RefreshTokens.Add(refreshToken);
+        
+        return rawToken;
+    }
+
+    public async Task<LoginResult> LoginAsync(UserCreationModel creationModel,
+        TimeSpan refreshTokenLifetime,
+        CancellationToken cancellationToken)
+    {
+        await using var context = await factory.CreateDbContextAsync(cancellationToken);
+        
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == creationModel.Email,
+            cancellationToken: cancellationToken);
+
+        if (user is null)
+            return new LoginResult.Failure();
+        
+        var verifyResult = BCrypt.Net.BCrypt.Verify(creationModel.Password, user.PasswordHash);
+
+        if (!verifyResult)
+            return new LoginResult.Failure();
+
+        var rawToken = AddRefreshToken(refreshTokenLifetime, user, context);
+        
+        await context.SaveChangesAsync(cancellationToken);
+        
+        var userDto = new UserDto(user.Id, user.Email, user.CreatedAt);
+
+        return new LoginResult.Success(userDto, rawToken);
     }
 }
