@@ -10,7 +10,9 @@ namespace SpendLensDatabase;
 
 public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
 {
-    public async Task<RegisterResult> CreateAuthModelsAsync(RegistrationModel data, CancellationToken cancellationToken)
+    public async Task<RegisterResult> CreateAuthModelsAsync(RegistrationModel data,
+        int refreshTokenLifetime,
+        CancellationToken cancellationToken)
     {
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
     
@@ -52,7 +54,7 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
             Id = tokenId,
             UserId = newUser.Id,
             TokenHash = verifierHash,
-            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenLifetime),
             RevokedAt = null
         };
         

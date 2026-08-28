@@ -73,7 +73,7 @@ app.MapPost("/api/auth/register", async Task<Results<Created<UserDto>, Conflict,
         HttpContext http,
         CancellationToken cancellationToken) =>
 {
-    var result = await db.CreateAuthModelsAsync(request, cancellationToken);
+    var result = await db.CreateAuthModelsAsync(request, jwtOptions.RefreshTokenExpirationDays,cancellationToken);
 
     return result switch
     {
