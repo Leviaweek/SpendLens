@@ -10,6 +10,9 @@ namespace SpendLensDatabase;
 
 public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
 {
+    private const string DummyPassword = "dummy1";
+    private const string DummyHash = "$2a$11$Z4gsv8S3WNaIP/uefFyxAOu4ghKbfz8K9m5IwTuS74NejWQ5n7KRe";
+
     public async Task<RegisterResult> CreateAuthModelsAsync(RegistrationModel data,
         TimeSpan refreshTokenLifetime,
         CancellationToken cancellationToken)
@@ -93,7 +96,10 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
             cancellationToken: cancellationToken);
 
         if (user is null)
+        {
+            BCrypt.Net.BCrypt.Verify(DummyPassword, DummyHash);
             return new LoginResult.Unauthorized();
+        }
         
         var verifyResult = BCrypt.Net.BCrypt.Verify(creationModel.Password, user.PasswordHash);
 
