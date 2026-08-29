@@ -68,7 +68,7 @@ public static class AuthEndpoints
         });
     }
 
-    private static async Task<Results<Ok<UserDto>, Conflict, ProblemHttpResult>> LoginAsync(
+    private static async Task<Results<Ok<UserDto>, UnauthorizedHttpResult, ProblemHttpResult>> LoginAsync(
         [FromBody] UserCreationModel request,
         [FromServices] JwtService jwtService,
         [FromServices] SpendLensDb db,
@@ -80,7 +80,7 @@ public static class AuthEndpoints
         return loginResult switch
         {
             LoginResult.Success success => SuccessLogin(success, jwtService, http),
-            LoginResult.Failure => TypedResults.Conflict(),
+            LoginResult.Unauthorized => TypedResults.Unauthorized(),
             _ => TypedResults.Problem()
         };
     }

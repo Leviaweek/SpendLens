@@ -6,5 +6,5 @@ public record LoginResult
 {
     public sealed record Success(UserDto User, string RefreshToken) : LoginResult;
 
-    public record Failure : LoginResult;
+    public record Unauthorized : LoginResult;
 }

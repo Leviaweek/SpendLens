@@ -93,12 +93,12 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
             cancellationToken: cancellationToken);
 
         if (user is null)
-            return new LoginResult.Failure();
+            return new LoginResult.Unauthorized();
         
         var verifyResult = BCrypt.Net.BCrypt.Verify(creationModel.Password, user.PasswordHash);
 
         if (!verifyResult)
-            return new LoginResult.Failure();
+            return new LoginResult.Unauthorized();
 
         var rawToken = AddRefreshToken(refreshTokenLifetime, user, context);
         
