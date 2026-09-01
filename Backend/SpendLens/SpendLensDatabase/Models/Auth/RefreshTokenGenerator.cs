@@ -22,6 +22,7 @@ public static class RefreshTokenGenerator
     public static (Guid Id, Guid Verifier) Split(string rawToken)
     {
         var bytes = Convert.FromBase64String(rawToken);
-        return (new Guid(bytes.AsSpan(0, 16)), new Guid(bytes.AsSpan(16, 16)));
+        return (new Guid(bytes.AsSpan(0, 16)), 
+            new Guid(bytes.AsSpan(16, 16)));
     }
 }

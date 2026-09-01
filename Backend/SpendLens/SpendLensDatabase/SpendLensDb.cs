@@ -8,7 +8,7 @@ using SpendLensDatabase.Models.Auth.Users;
 
 namespace SpendLensDatabase;
 
-public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
+public sealed class SpendLensDb(SpendLensDbContext context)
 {
     private const string DummyPassword = "dummy1";
     private const string DummyHash = "$2a$11$Z4gsv8S3WNaIP/uefFyxAOu4ghKbfz8K9m5IwTuS74NejWQ5n7KRe";
@@ -17,8 +17,6 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
         TimeSpan refreshTokenLifetime,
         CancellationToken cancellationToken)
     {
-        await using var context = await factory.CreateDbContextAsync(cancellationToken);
-    
         var email = data.User.Email.ToLowerInvariant();
         
         var user = await context.Users
@@ -50,7 +48,7 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
             Role = MembershipRole.Owner
         };
 
-        var rawToken = AddRefreshToken(refreshTokenLifetime, newUser, context);
+        var rawToken = AddRefreshToken(refreshTokenLifetime, newUser);
 
         context.Users.Add(newUser);
         context.Organizations.Add(newOrganization);
@@ -68,7 +66,7 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
         return new RegisterResult.Success(userDto, rawToken);
     }
 
-    private static string AddRefreshToken(TimeSpan refreshTokenLifetime, User user, SpendLensDbContext context)
+    private string AddRefreshToken(TimeSpan refreshTokenLifetime, User user)
     {
         var (rawToken, tokenId, verifierHash) = RefreshTokenGenerator.Generate();
 
@@ -90,8 +88,6 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
         TimeSpan refreshTokenLifetime,
         CancellationToken cancellationToken)
     {
-        await using var context = await factory.CreateDbContextAsync(cancellationToken);
-        
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == creationModel.Email,
             cancellationToken: cancellationToken);
 
@@ -106,7 +102,7 @@ public sealed class SpendLensDb(IDbContextFactory<SpendLensDbContext> factory)
         if (!verifyResult)
             return new LoginResult.Unauthorized();
 
-        var rawToken = AddRefreshToken(refreshTokenLifetime, user, context);
+        var rawToken = AddRefreshToken(refreshTokenLifetime, user);
         
         await context.SaveChangesAsync(cancellationToken);
         

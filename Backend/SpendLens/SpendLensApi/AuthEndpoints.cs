@@ -15,7 +15,10 @@ public static class AuthEndpoints
 
         group.MapPost("/register", RegisterAsync);
         group.MapPost("/login", LoginAsync);
-        // group.MapPost("/refresh", RefreshAsync);
+        
+        group.MapPost("/refresh", RefreshAsync)
+            .RequireAuthorization(RefreshTokenAuthentication.Scheme);
+            
     }
 
     private static async Task<Results<Created<UserDto>, Conflict, ProblemHttpResult>> RegisterAsync(
@@ -89,5 +92,10 @@ public static class AuthEndpoints
     {
         AddTokens(success.User, success.RefreshToken, jwtService, http);
         return TypedResults.Ok(success.User);
+    }
+
+    public static async Task RefreshAsync()
+    {
+        //ToDo
     }
 }

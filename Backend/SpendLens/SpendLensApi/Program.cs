@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,8 +17,16 @@ var jwtOptions = builder.Configuration
 
 ArgumentNullException.ThrowIfNull(jwtOptions);
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(RefreshTokenAuthentication.Scheme, policy =>
+    {
+        policy.AddAuthenticationSchemes(
+            RefreshTokenAuthentication.Scheme);
 
+        policy.RequireAuthenticatedUser();
+    });
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -34,9 +43,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey =  new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
         };
-    });
+    })
+    .AddScheme<
+        AuthenticationSchemeOptions,
+        RefreshTokenAuthenticationHandler>(
+        RefreshTokenAuthentication.Scheme,
+        _ => { });
 
-builder.Services.AddDbContextFactory<SpendLensDbContext>(h =>
+builder.Services.AddDbContext<SpendLensDbContext>(h =>
 {
     var connectionString = builder.Configuration.GetConnectionString(SpendLensDbContext.OptionName);
     var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
