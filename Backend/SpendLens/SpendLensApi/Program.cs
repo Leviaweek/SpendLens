@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using SpendLensApi;
+using SpendLensApi.Auth;
+using SpendLensApi.Auth.Login;
+using SpendLensApi.Auth.RefreshTokens;
+using SpendLensApi.Auth.Registration;
 using SpendLensDatabase;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,19 +21,19 @@ var jwtOptions = builder.Configuration
 
 ArgumentNullException.ThrowIfNull(jwtOptions);
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(RefreshTokenAuthentication.Scheme, policy =>
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(RefreshTokenAuthenticationContext.Scheme, policy =>
     {
         policy.AddAuthenticationSchemes(
-            RefreshTokenAuthentication.Scheme);
+            RefreshTokenAuthenticationContext.Scheme);
 
         policy.RequireAuthenticatedUser();
     });
-});
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -47,7 +51,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddScheme<
         AuthenticationSchemeOptions,
         RefreshTokenAuthenticationHandler>(
-        RefreshTokenAuthentication.Scheme,
+        RefreshTokenAuthenticationContext.Scheme,
         _ => { });
 
 builder.Services.AddDbContext<SpendLensDbContext>(h =>
@@ -58,7 +62,9 @@ builder.Services.AddDbContext<SpendLensDbContext>(h =>
     h.UseNpgsql(dataSource);
 });
 
-builder.Services.AddScoped<SpendLensDb>();
+builder.Services.AddScoped<LoginService>();
+builder.Services.AddScoped<RegistrationService>();
+builder.Services.AddScoped<RefreshTokenService>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 

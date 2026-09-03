@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace SpendLensDatabase.Models.Auth;
+namespace SpendLensDatabase.Models.AuthData;
 
 public static class RefreshTokenGenerator
 {
