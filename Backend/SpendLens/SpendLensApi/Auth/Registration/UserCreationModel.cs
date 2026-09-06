@@ -1,3 +1,3 @@
-namespace SpendLensDatabase.Models.Auth.Users;
+namespace SpendLensApi.Auth.Registration;
 
 public sealed record UserCreationModel(string Email, string Password);

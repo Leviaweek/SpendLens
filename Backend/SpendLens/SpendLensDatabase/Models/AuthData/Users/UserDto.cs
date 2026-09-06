@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace SpendLensDatabase.Models.Auth.Users;
+namespace SpendLensDatabase.Models.AuthData.Users;
 
 public sealed record UserDto(Guid Id, string Email, DateTime CreatedAt)
 {

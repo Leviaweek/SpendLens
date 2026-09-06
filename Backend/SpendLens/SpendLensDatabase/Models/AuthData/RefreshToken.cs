@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SpendLensDatabase.Models.Auth.Users;
+using SpendLensDatabase.Models.AuthData.Users;
 
-namespace SpendLensDatabase.Models.Auth;
+namespace SpendLensDatabase.Models.AuthData;
 
 public class RefreshToken
 {
@@ -10,7 +10,7 @@ public class RefreshToken
     public required Guid UserId { get; init; }
     public required byte[] TokenHash { get; init; }
     public required DateTime ExpiresAt { get; init; }
-    public required DateTime? RevokedAt { get; init; }
+    public required DateTime? RevokedAt { get; set; }
     public User User { get; init; } = null!;
 }
 
@@ -37,9 +37,9 @@ file sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshTo
                         DateTimeKind.Utc),
                 dr => dr);
         
-       builder.HasOne(r => r.User)
-           .WithMany()
-           .HasForeignKey(r => r.UserId)
-           .OnDelete(DeleteBehavior.NoAction);
+        builder.HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

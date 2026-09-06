@@ -1,9 +1,14 @@
 using System.Text;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using SpendLensApi;
+using SpendLensApi.Auth;
+using SpendLensApi.Auth.Login;
+using SpendLensApi.Auth.RefreshTokens;
+using SpendLensApi.Auth.Registration;
 using SpendLensDatabase;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,11 +21,19 @@ var jwtOptions = builder.Configuration
 
 ArgumentNullException.ThrowIfNull(jwtOptions);
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(RefreshTokenAuthenticationContext.Scheme, policy =>
+    {
+        policy.AddAuthenticationSchemes(
+            RefreshTokenAuthenticationContext.Scheme);
+
+        policy.RequireAuthenticatedUser();
+    });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -34,9 +47,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey =  new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
         };
-    });
+    })
+    .AddScheme<
+        AuthenticationSchemeOptions,
+        RefreshTokenAuthenticationHandler>(
+        RefreshTokenAuthenticationContext.Scheme,
+        _ => { });
 
-builder.Services.AddDbContextFactory<SpendLensDbContext>(h =>
+builder.Services.AddDbContext<SpendLensDbContext>(h =>
 {
     var connectionString = builder.Configuration.GetConnectionString(SpendLensDbContext.OptionName);
     var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
@@ -44,7 +62,9 @@ builder.Services.AddDbContextFactory<SpendLensDbContext>(h =>
     h.UseNpgsql(dataSource);
 });
 
-builder.Services.AddScoped<SpendLensDb>();
+builder.Services.AddScoped<LoginService>();
+builder.Services.AddScoped<RegistrationService>();
+builder.Services.AddScoped<RefreshTokenService>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 

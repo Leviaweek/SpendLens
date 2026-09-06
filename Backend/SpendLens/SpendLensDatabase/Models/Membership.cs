@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SpendLensDatabase.Models.Auth.Organization;
-using SpendLensDatabase.Models.Auth.Users;
+using SpendLensDatabase.Models.AuthData.Organization;
+using SpendLensDatabase.Models.AuthData.Users;
 
 namespace SpendLensDatabase.Models;
 

@@ -1,11 +1,13 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using SpendLensDatabase;
-using SpendLensDatabase.Models.Auth;
-using SpendLensDatabase.Models.Auth.Users;
+using SpendLensApi.Auth.Login;
+using SpendLensApi.Auth.RefreshTokens;
+using SpendLensApi.Auth.Registration;
+using SpendLensDatabase.Models.AuthData.Users;
 
-namespace SpendLensApi;
+namespace SpendLensApi.Auth;
 
 public static class AuthEndpoints
 {
@@ -15,13 +17,16 @@ public static class AuthEndpoints
 
         group.MapPost("/register", RegisterAsync);
         group.MapPost("/login", LoginAsync);
-        // group.MapPost("/refresh", RefreshAsync);
+        
+        group.MapPost("/refresh", RefreshAsync)
+            .RequireAuthorization(RefreshTokenAuthenticationContext.Scheme);
+            
     }
 
     private static async Task<Results<Created<UserDto>, Conflict, ProblemHttpResult>> RegisterAsync(
         [FromBody] RegistrationModel request, 
         [FromServices] JwtService jwtService,
-        [FromServices] SpendLensDb db, 
+        [FromServices] RegistrationService db, 
         [FromServices] IOptions<JwtOptions> jwtOptions,
         HttpContext http,
         CancellationToken cancellationToken
@@ -71,11 +76,15 @@ public static class AuthEndpoints
     private static async Task<Results<Ok<UserDto>, UnauthorizedHttpResult, ProblemHttpResult>> LoginAsync(
         [FromBody] UserCreationModel request,
         [FromServices] JwtService jwtService,
-        [FromServices] SpendLensDb db,
+        [FromServices] LoginService db,
+        [FromServices] IOptions<JwtOptions> jwtOptions,
         HttpContext http,
         CancellationToken cancellationToken)
     {
-        var loginResult = await db.LoginAsync(request, TimeSpan.FromDays(30), cancellationToken);
+        var jwt = jwtOptions.Value;
+        var loginResult = await db.LoginAsync(request,
+            TimeSpan.FromDays(jwt.RefreshTokenExpirationDays),
+            cancellationToken);
 
         return loginResult switch
         {
@@ -89,5 +98,38 @@ public static class AuthEndpoints
     {
         AddTokens(success.User, success.RefreshToken, jwtService, http);
         return TypedResults.Ok(success.User);
+    }
+
+    private static async Task<Results<Ok, UnauthorizedHttpResult, ProblemHttpResult>> RefreshAsync(
+        [FromServices] RefreshTokenService service,
+        [FromServices] IOptions<JwtOptions> jwtOptions,
+        [FromServices] JwtService jwtService,
+        HttpContext http,
+        CancellationToken cancellationToken)
+    {
+        var idClaims = http.User.FindFirstValue(RefreshTokenAuthenticationContext.IdentityIdClaim);
+        
+        ArgumentNullException.ThrowIfNull(idClaims);
+        
+        var id = Guid.Parse(idClaims);
+
+        var jwt = jwtOptions.Value;
+        
+        var rotationResult = await service.RotateAsync(id,
+            TimeSpan.FromDays(jwt.RefreshTokenExpirationDays),
+            cancellationToken);
+
+        return rotationResult switch
+        {
+            RotateResult.Success success => SuccessRefresh(success,jwtService, http),
+            RotateResult.ReuseOrNotFound => TypedResults.Unauthorized(),
+            _ => TypedResults.Problem()
+        };
+    }
+
+    private static Ok SuccessRefresh(RotateResult.Success success, JwtService jwtService,HttpContext http)
+    {
+        AddTokens(success.User, success.RawToken, jwtService, http);
+        return TypedResults.Ok();
     }
 }

@@ -1,6 +1,6 @@
-using SpendLensDatabase.Models.Auth.Users;
+using SpendLensDatabase.Models.AuthData.Users;
 
-namespace SpendLensDatabase.Models.Auth;
+namespace SpendLensApi.Auth.Login;
 
 public record LoginResult
 {
