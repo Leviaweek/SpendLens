@@ -47,7 +47,8 @@ public sealed class RefreshTokenService(SpendLensDbContext context)
     public async Task<RotateResult> RotateAsync(Guid id, TimeSpan lifetime, CancellationToken cancellationToken)
     {
         var revoked = await context.RefreshTokens
-            .Where(t => t.Id == id && t.RevokedAt == null)
+            .Where(t => t.Id == id)
+            .Where(t => t.RevokedAt == null)
             .ExecuteUpdateAsync(
                 s => s.SetProperty(t => t.RevokedAt, DateTime.UtcNow), 
                 cancellationToken);
