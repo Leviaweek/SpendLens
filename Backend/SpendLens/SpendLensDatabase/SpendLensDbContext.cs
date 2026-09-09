@@ -17,7 +17,8 @@ public class SpendLensDbContext(DbContextOptions<SpendLensDbContext> options)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema(OptionName);
+        modelBuilder.HasDefaultSchema(PublicSchema);
+        
         base.OnModelCreating(modelBuilder);
         
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(SpendLensDbContext).Assembly);
