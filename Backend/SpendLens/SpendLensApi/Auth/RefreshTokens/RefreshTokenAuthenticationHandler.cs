@@ -27,7 +27,7 @@ public sealed class RefreshTokenAuthenticationHandler(
                 RefreshTokenGenerator.Split(rawToken);
 
             if (!await refreshTokenService.ValidateAsync(identityId, verifyId, Context.RequestAborted))
-                return AuthenticateResult.NoResult();
+                return AuthenticateResult.Fail("Bad credentials");
             
             var claims = new[]
             {
