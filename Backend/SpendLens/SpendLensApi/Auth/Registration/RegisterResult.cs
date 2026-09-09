@@ -1,4 +1,4 @@
-using SpendLensDatabase.Models.AuthData.Users;
+using SpendLensApi.Contracts.Users;
 
 namespace SpendLensApi.Auth.Registration;
 

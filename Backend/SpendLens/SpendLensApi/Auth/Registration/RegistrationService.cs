@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SpendLensApi.Auth.RefreshTokens;
+using SpendLensApi.Contracts.Users;
 using SpendLensDatabase;
 using SpendLensDatabase.Models;
 using SpendLensDatabase.Models.AuthData.Organization;

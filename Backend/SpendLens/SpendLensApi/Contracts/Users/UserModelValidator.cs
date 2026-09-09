@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace SpendLensApi.Auth.Registration;
+namespace SpendLensApi.Contracts.Users;
 
 public sealed class UserModelValidator : AbstractValidator<UserModel>
 {

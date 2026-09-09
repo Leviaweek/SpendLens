@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using SpendLensApi.Contracts.Users;
 using SpendLensDatabase;
 using SpendLensDatabase.Models.AuthData;
 using SpendLensDatabase.Models.AuthData.Users;
@@ -44,7 +45,7 @@ public sealed class RefreshTokenService(SpendLensDbContext context)
         return CryptographicOperations.FixedTimeEquals(hash, token.TokenHash);
     }
 
-    public async Task<RotateResult> RotateAsync(Guid id, TimeSpan lifetime, CancellationToken cancellationToken)
+    public async Task<RefreshResult> RotateAsync(Guid id, TimeSpan lifetime, CancellationToken cancellationToken)
     {
         var revoked = await context.RefreshTokens
             .Where(t => t.Id == id)
@@ -54,7 +55,7 @@ public sealed class RefreshTokenService(SpendLensDbContext context)
                 cancellationToken);
 
         if (revoked == 0)
-            return new RotateResult.ReuseOrNotFound();
+            return new RefreshResult.ReuseOrNotFound();
 
         var userDto = await context.RefreshTokens
             .Where(t => t.Id == id)
@@ -77,6 +78,6 @@ public sealed class RefreshTokenService(SpendLensDbContext context)
 
         await context.SaveChangesAsync(cancellationToken);
 
-        return new RotateResult.Success(rawToken, userDto);
+        return new RefreshResult.Success(rawToken, userDto);
     }
 }

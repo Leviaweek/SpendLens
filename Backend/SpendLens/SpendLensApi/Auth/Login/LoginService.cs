@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SpendLensApi.Auth.RefreshTokens;
-using SpendLensApi.Auth.Registration;
+using SpendLensApi.Contracts.Users;
 using SpendLensDatabase;
-using SpendLensDatabase.Models.AuthData.Users;
 
 namespace SpendLensApi.Auth.Login;
 

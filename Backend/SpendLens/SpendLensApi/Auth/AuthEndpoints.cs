@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using SpendLensApi.Auth.Login;
 using SpendLensApi.Auth.RefreshTokens;
 using SpendLensApi.Auth.Registration;
-using SpendLensDatabase.Models.AuthData.Users;
+using SpendLensApi.Contracts.Users;
 
 namespace SpendLensApi.Auth;
 
@@ -124,13 +124,13 @@ public static class AuthEndpoints
 
         return rotationResult switch
         {
-            RotateResult.Success success => SuccessRefresh(success,jwtService, http),
-            RotateResult.ReuseOrNotFound => TypedResults.Unauthorized(),
+            RefreshResult.Success success => SuccessRefresh(success,jwtService, http),
+            RefreshResult.ReuseOrNotFound => TypedResults.Unauthorized(),
             _ => TypedResults.Problem()
         };
     }
 
-    private static Ok SuccessRefresh(RotateResult.Success success, JwtService jwtService,HttpContext http)
+    private static Ok SuccessRefresh(RefreshResult.Success success, JwtService jwtService,HttpContext http)
     {
         AddTokens(success.User, success.RawToken, jwtService, http);
         return TypedResults.Ok();

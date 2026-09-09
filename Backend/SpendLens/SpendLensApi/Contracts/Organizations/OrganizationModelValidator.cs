@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace SpendLensApi.Auth.Registration;
+namespace SpendLensApi.Contracts.Organizations;
 
 public sealed class OrganizationModelValidator : AbstractValidator<OrganizationModel>
 {

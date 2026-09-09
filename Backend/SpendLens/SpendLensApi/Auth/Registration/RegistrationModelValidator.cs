@@ -1,4 +1,6 @@
 using FluentValidation;
+using SpendLensApi.Contracts.Organizations;
+using SpendLensApi.Contracts.Users;
 
 namespace SpendLensApi.Auth.Registration;
 
