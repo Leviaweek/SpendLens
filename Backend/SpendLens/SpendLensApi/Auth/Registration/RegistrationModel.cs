@@ -1,3 +1,3 @@
 namespace SpendLensApi.Auth.Registration;
 
-public sealed record RegistrationModel(UserCreationModel User, OrganizationCreationModel Organization);
+public sealed record RegistrationModel(UserModel User, OrganizationModel Organization);

@@ -1,4 +1,5 @@
 using System.Text;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,8 @@ builder.Services.AddDbContext<SpendLensDbContext>(h =>
     h.UseNpgsql(dataSource);
 });
 
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddScoped<RefreshTokenService>();
@@ -82,10 +85,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapAuthEndpoints();
-
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapAuthEndpoints();
 
 //app.UseHttpsRedirection();
 

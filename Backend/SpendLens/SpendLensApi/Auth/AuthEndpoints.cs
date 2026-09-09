@@ -15,8 +15,11 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/api/auth").WithTags("Auth");
 
-        group.MapPost("/register", RegisterAsync);
-        group.MapPost("/login", LoginAsync);
+        group.MapPost("/register", RegisterAsync)
+            .AddEndpointFilter<ValidationFilter<RegistrationModel>>();
+
+        group.MapPost("/login", LoginAsync)
+            .AddEndpointFilter<ValidationFilter<UserModel>>();
         
         group.MapPost("/refresh", RefreshAsync)
             .RequireAuthorization(RefreshTokenAuthenticationContext.Scheme);
@@ -74,7 +77,7 @@ public static class AuthEndpoints
     }
 
     private static async Task<Results<Ok<UserDto>, UnauthorizedHttpResult, ProblemHttpResult>> LoginAsync(
-        [FromBody] UserCreationModel request,
+        [FromBody] UserModel request,
         [FromServices] JwtService jwtService,
         [FromServices] LoginService db,
         [FromServices] IOptions<JwtOptions> jwtOptions,
