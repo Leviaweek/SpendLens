@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SpendLensDatabase.Models.AuthData.Organization;
-using SpendLensDatabase.Models.AuthData.Users;
 
-namespace SpendLensDatabase.Models;
+namespace SpendLensDatabase.Models.Entities;
 
 public class Membership
 {

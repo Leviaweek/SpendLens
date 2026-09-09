@@ -4,8 +4,7 @@ using SpendLensApi.Auth.RefreshTokens;
 using SpendLensApi.Contracts.Users;
 using SpendLensDatabase;
 using SpendLensDatabase.Models;
-using SpendLensDatabase.Models.AuthData.Organization;
-using SpendLensDatabase.Models.AuthData.Users;
+using SpendLensDatabase.Models.Entities;
 
 namespace SpendLensApi.Auth.Registration;
 

@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SpendLensDatabase.Models.AuthData.Users;
 
-namespace SpendLensDatabase.Models.AuthData;
+namespace SpendLensDatabase.Models.Entities;
 
 public class RefreshToken
 {

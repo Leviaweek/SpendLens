@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using SpendLensDatabase.Models.AuthData.Users;
+using SpendLensDatabase.Models.Entities;
 
 namespace SpendLensApi.Contracts.Users;
 

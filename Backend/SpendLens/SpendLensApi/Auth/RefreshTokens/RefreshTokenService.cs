@@ -2,8 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using SpendLensApi.Contracts.Users;
 using SpendLensDatabase;
-using SpendLensDatabase.Models.AuthData;
-using SpendLensDatabase.Models.AuthData.Users;
+using SpendLensDatabase.Models.Entities;
 
 namespace SpendLensApi.Auth.RefreshTokens;
 
