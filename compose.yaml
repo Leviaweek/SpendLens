@@ -17,7 +17,12 @@ services:
       context: ./Backend/SpendLens
       dockerfile: SpendLensApi/Dockerfile
     environment:
-      'ConnectionStrings__DefaultConnection': 'Host=db;Port=5432;Database=${DATABASE};Username=${USERNAME};Password=${PASSWORD};'
+      ConnectionStrings__DefaultConnection: 'Host=db;Port=5432;Database=${DATABASE};Username=${USERNAME};Password=${PASSWORD};'
+      Jwt__Secret: '${JWT_SECRET}'
+      Jwt__Issuer: '${JWT_ISSUER}'
+      Jwt__Audience: '${JWT_AUDIENCE}'
+      Jwt__AccessTokenExpirationMinutes: '${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES}'
+      Jwt__RefreshTokenExpirationDays: '${JWT_REFRESH_TOKEN_EXPIRATION_DAYS}'
   
   worker:
     image: worker
