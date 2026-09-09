@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -71,6 +72,41 @@ builder.Services.AddOptions<JwtBearerOptions>()
         };
     });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy(RateLimitPolicies.Login, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            GetClientIp(context),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy(RateLimitPolicies.Register, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            GetClientIp(context),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy(RateLimitPolicies.Refresh, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            GetClientIp(context),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 builder.Services.AddDbContext<SpendLensDbContext>(h =>
 {
     var connectionString = builder.Configuration.GetConnectionString(SpendLensDbContext.OptionName);
@@ -102,3 +138,11 @@ app.MapAuthEndpoints();
 //app.UseHttpsRedirection();
 
 await app.RunAsync();
+
+return;
+
+static string GetClientIp(HttpContext context)
+{
+    return context.Connection.RemoteIpAddress?.ToString()
+           ?? "unknown";
+}

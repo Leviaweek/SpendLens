@@ -16,13 +16,16 @@ public static class AuthEndpoints
         var group = app.MapGroup("/api/auth").WithTags("Auth");
 
         group.MapPost("/register", RegisterAsync)
-            .AddEndpointFilter<ValidationFilter<RegistrationModel>>();
+            .AddEndpointFilter<ValidationFilter<RegistrationModel>>()
+            .RequireRateLimiting(RateLimitPolicies.Register);
 
         group.MapPost("/login", LoginAsync)
-            .AddEndpointFilter<ValidationFilter<UserModel>>();
+            .AddEndpointFilter<ValidationFilter<UserModel>>()
+            .RequireRateLimiting(RateLimitPolicies.Login);
         
         group.MapPost("/refresh", RefreshAsync)
-            .RequireAuthorization(RefreshTokenAuthenticationContext.Scheme);
+            .RequireAuthorization(RefreshTokenAuthenticationContext.Scheme)
+            .RequireRateLimiting(RateLimitPolicies.Refresh);
             
     }
 
