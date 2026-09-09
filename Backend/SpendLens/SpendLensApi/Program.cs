@@ -132,9 +132,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapAuthEndpoints();
-
+app.UseRateLimiter();
 //app.UseHttpsRedirection();
 
 await app.RunAsync();
