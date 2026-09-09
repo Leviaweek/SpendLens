@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using SpendLensApi;
@@ -16,11 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-var jwtOptions = builder.Configuration
-    .GetSection(JwtOptions.SectionName)
-    .Get<JwtOptions>();
-
-ArgumentNullException.ThrowIfNull(jwtOptions);
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(RefreshTokenAuthenticationContext.Scheme, policy =>
@@ -32,39 +32,44 @@ builder.Services.AddAuthorizationBuilder()
     });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.MapInboundClaims = false;
-
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                context.Token = context.Request.Cookies[AccessTokenService.CookieName];
-
-                return Task.CompletedTask;
-            }
-        };
-        
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = jwtOptions.Issuer,
-            
-            ValidateAudience = true,
-            ValidAudience = jwtOptions.Audience,
-            
-            ValidateLifetime = true,
-            
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey =  new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
-        };
-    })
+    .AddJwtBearer()
     .AddScheme<
         AuthenticationSchemeOptions,
         RefreshTokenAuthenticationHandler>(
         RefreshTokenAuthenticationContext.Scheme,
         _ => { });
+
+builder.Services.AddOptions<JwtBearerOptions>()
+    .Configure<IOptions<JwtOptions>>((jwtBearer, jwt) =>
+    {
+        jwtBearer.MapInboundClaims = false;
+
+        jwtBearer.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies[
+                    AccessTokenService.CookieName];
+
+                return Task.CompletedTask;
+            }
+        };
+
+        jwtBearer.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwt.Value.Issuer,
+
+            ValidateAudience = true,
+            ValidAudience = jwt.Value.Audience,
+
+            ValidateLifetime = true,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwt.Value.Secret))
+        };
+    });
 
 builder.Services.AddDbContext<SpendLensDbContext>(h =>
 {
@@ -79,11 +84,6 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddScoped<RefreshTokenService>();
-
-builder.Services.AddOptions<JwtOptions>()
-    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
 
 builder.Services.AddSingleton<AccessTokenService>();
 
