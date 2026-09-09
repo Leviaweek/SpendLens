@@ -17,13 +17,34 @@ namespace SpendLensDatabase.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("DefaultConnection")
+                .HasDefaultSchema("public")
                 .HasAnnotation("ProductVersion", "9.0.19")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("SpendLensDatabase.Models.Auth.Organization.Organization", b =>
+            modelBuilder.Entity("SpendLensDatabase.Models.Entities.Membership", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<byte>("Role")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("UserId", "OrganizationId");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.ToTable("Memberships", "public");
+                });
+
+            modelBuilder.Entity("SpendLensDatabase.Models.Entities.Organization", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -42,7 +63,7 @@ namespace SpendLensDatabase.Migrations
                     b.ToTable("Organizations", "public");
                 });
 
-            modelBuilder.Entity("SpendLensDatabase.Models.Auth.RefreshToken", b =>
+            modelBuilder.Entity("SpendLensDatabase.Models.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -69,7 +90,7 @@ namespace SpendLensDatabase.Migrations
                     b.ToTable("RefreshTokens", "public");
                 });
 
-            modelBuilder.Entity("SpendLensDatabase.Models.Auth.Users.User", b =>
+            modelBuilder.Entity("SpendLensDatabase.Models.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -96,47 +117,15 @@ namespace SpendLensDatabase.Migrations
                     b.ToTable("Users", "public");
                 });
 
-            modelBuilder.Entity("SpendLensDatabase.Models.Membership", b =>
+            modelBuilder.Entity("SpendLensDatabase.Models.Entities.Membership", b =>
                 {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<byte>("Role")
-                        .HasColumnType("smallint");
-
-                    b.HasKey("UserId", "OrganizationId");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.ToTable("Memberships", "public");
-                });
-
-            modelBuilder.Entity("SpendLensDatabase.Models.Auth.RefreshToken", b =>
-                {
-                    b.HasOne("SpendLensDatabase.Models.Auth.Users.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SpendLensDatabase.Models.Membership", b =>
-                {
-                    b.HasOne("SpendLensDatabase.Models.Auth.Organization.Organization", "Organization")
+                    b.HasOne("SpendLensDatabase.Models.Entities.Organization", "Organization")
                         .WithMany("Memberships")
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("SpendLensDatabase.Models.Auth.Users.User", "User")
+                    b.HasOne("SpendLensDatabase.Models.Entities.User", "User")
                         .WithMany("Memberships")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -147,12 +136,23 @@ namespace SpendLensDatabase.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SpendLensDatabase.Models.Auth.Organization.Organization", b =>
+            modelBuilder.Entity("SpendLensDatabase.Models.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("SpendLensDatabase.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpendLensDatabase.Models.Entities.Organization", b =>
                 {
                     b.Navigation("Memberships");
                 });
 
-            modelBuilder.Entity("SpendLensDatabase.Models.Auth.Users.User", b =>
+            modelBuilder.Entity("SpendLensDatabase.Models.Entities.User", b =>
                 {
                     b.Navigation("Memberships");
                 });
