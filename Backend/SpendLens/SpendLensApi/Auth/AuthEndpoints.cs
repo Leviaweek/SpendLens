@@ -28,7 +28,7 @@ public static class AuthEndpoints
 
     private static async Task<Results<Created<UserDto>, Conflict, ProblemHttpResult>> RegisterAsync(
         [FromBody] RegistrationModel request, 
-        [FromServices] JwtService jwtService,
+        [FromServices] AccessTokenService accessTokenService,
         [FromServices] RegistrationService db, 
         [FromServices] IOptions<JwtOptions> jwtOptions,
         HttpContext http,
@@ -43,31 +43,31 @@ public static class AuthEndpoints
 
         return result switch
         {
-            RegisterResult.Success success => SuccessLogin(success, jwtService, http),
+            RegisterResult.Success success => SuccessLogin(success, accessTokenService, http),
             RegisterResult.EmailTaken => TypedResults.Conflict(),
             _ => TypedResults.Problem()
         };
     }
     
-    private static Created<UserDto> SuccessLogin(RegisterResult.Success success, JwtService jwtService, HttpContext http)
+    private static Created<UserDto> SuccessLogin(RegisterResult.Success success, AccessTokenService accessTokenService, HttpContext http)
     {
-        AddTokens(success.User, success.RefreshToken, jwtService, http);
+        AddTokens(success.User, success.RefreshToken, accessTokenService, http);
 
         return TypedResults.Created($"/users/{success.User.Id:N}", success.User);
     }
 
-    private static void AddTokens(UserDto user, string rawToken,JwtService jwtService, HttpContext http)
+    private static void AddTokens(UserDto user, string rawToken,AccessTokenService accessTokenService, HttpContext http)
     {
-        var token = jwtService.GenerateToken(user.Id.ToString("N"), user.Email);
+        var token = accessTokenService.GenerateToken(user.Id.ToString("N"), user.Email);
         
-        http.Response.Cookies.Append(JwtService.AccessCookieName, token, new CookieOptions
+        http.Response.Cookies.Append(AccessTokenService.CookieName, token, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Lax
         });
         
-        http.Response.Cookies.Append(JwtService.RefreshTokenCookieName, rawToken, new CookieOptions
+        http.Response.Cookies.Append(RefreshTokenService.CookieName, rawToken, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
@@ -78,7 +78,7 @@ public static class AuthEndpoints
 
     private static async Task<Results<Ok<UserDto>, UnauthorizedHttpResult, ProblemHttpResult>> LoginAsync(
         [FromBody] UserModel request,
-        [FromServices] JwtService jwtService,
+        [FromServices] AccessTokenService accessTokenService,
         [FromServices] LoginService db,
         [FromServices] IOptions<JwtOptions> jwtOptions,
         HttpContext http,
@@ -91,22 +91,22 @@ public static class AuthEndpoints
 
         return loginResult switch
         {
-            LoginResult.Success success => SuccessLogin(success, jwtService, http),
+            LoginResult.Success success => SuccessLogin(success, accessTokenService, http),
             LoginResult.Unauthorized => TypedResults.Unauthorized(),
             _ => TypedResults.Problem()
         };
     }
 
-    private static Ok<UserDto> SuccessLogin(LoginResult.Success success,JwtService jwtService, HttpContext http)
+    private static Ok<UserDto> SuccessLogin(LoginResult.Success success,AccessTokenService accessTokenService, HttpContext http)
     {
-        AddTokens(success.User, success.RefreshToken, jwtService, http);
+        AddTokens(success.User, success.RefreshToken, accessTokenService, http);
         return TypedResults.Ok(success.User);
     }
 
     private static async Task<Results<Ok, UnauthorizedHttpResult, ProblemHttpResult>> RefreshAsync(
         [FromServices] RefreshTokenService service,
         [FromServices] IOptions<JwtOptions> jwtOptions,
-        [FromServices] JwtService jwtService,
+        [FromServices] AccessTokenService accessTokenService,
         HttpContext http,
         CancellationToken cancellationToken)
     {
@@ -124,15 +124,15 @@ public static class AuthEndpoints
 
         return rotationResult switch
         {
-            RefreshResult.Success success => SuccessRefresh(success,jwtService, http),
+            RefreshResult.Success success => SuccessRefresh(success,accessTokenService, http),
             RefreshResult.ReuseOrNotFound => TypedResults.Unauthorized(),
             _ => TypedResults.Problem()
         };
     }
 
-    private static Ok SuccessRefresh(RefreshResult.Success success, JwtService jwtService,HttpContext http)
+    private static Ok SuccessRefresh(RefreshResult.Success success, AccessTokenService accessTokenService,HttpContext http)
     {
-        AddTokens(success.User, success.RawToken, jwtService, http);
+        AddTokens(success.User, success.RawToken, accessTokenService, http);
         return TypedResults.Ok();
     }
 }

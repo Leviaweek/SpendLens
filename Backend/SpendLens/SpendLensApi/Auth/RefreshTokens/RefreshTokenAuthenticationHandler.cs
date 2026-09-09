@@ -15,7 +15,7 @@ public sealed class RefreshTokenAuthenticationHandler(
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!Request.Cookies.TryGetValue(JwtService.RefreshTokenCookieName, out var rawToken))
+        if (!Request.Cookies.TryGetValue(RefreshTokenService.CookieName, out var rawToken))
             return AuthenticateResult.NoResult();
 
         if (string.IsNullOrWhiteSpace(rawToken))

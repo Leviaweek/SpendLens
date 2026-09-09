@@ -8,6 +8,8 @@ namespace SpendLensApi.Auth.RefreshTokens;
 
 public sealed class RefreshTokenService(SpendLensDbContext context)
 {
+    public const string CookieName = "refreshToken";
+    
     public string AddRefreshToken(TimeSpan refreshTokenLifetime, User user)
     {
         var (rawToken, tokenId, verifierHash) = RefreshTokenGenerator.Generate();
