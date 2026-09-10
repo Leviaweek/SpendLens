@@ -8,7 +8,10 @@ using SpendLensDatabase.Models.Entities;
 
 namespace SpendLensApi.Auth.Registration;
 
-public sealed class RegistrationService(SpendLensDbContext context, RefreshTokenService refreshTokenService)
+public sealed class RegistrationService(
+    SpendLensDbContext context,
+    RefreshTokenService refreshTokenService,
+    ILogger<RegistrationService> logger)
 {
     public async Task<RegisterResult> CreateAuthModelsAsync(RegistrationModel data,
         TimeSpan refreshTokenLifetime,
@@ -19,7 +22,12 @@ public sealed class RegistrationService(SpendLensDbContext context, RefreshToken
         var user = await GetUserOrDefaultAsync(email, cancellationToken);
 
         if (user is not null)
+        {
+            logger.LogDebug(
+                "Registration failed: email {Email} is already registered",
+                email);
             return new RegisterResult.EmailTaken();
+        }
 
         var newUser = new User
         {
@@ -57,8 +65,16 @@ public sealed class RegistrationService(SpendLensDbContext context, RefreshToken
         }
         catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
+            logger.LogDebug(
+                "Registration failed: email {Email} is already registered",
+                email);
             return new RegisterResult.EmailTaken();
         }
+        
+        logger.LogInformation(
+            "User {UserId} registered successfully",
+            newUser.Id);
+        
         var userDto = new UserDto(newUser.Id, newUser.Email, newUser.CreatedAt);
         return new RegisterResult.Success(userDto, rawToken);
     }

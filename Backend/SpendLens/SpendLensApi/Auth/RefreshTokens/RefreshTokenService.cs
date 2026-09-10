@@ -6,7 +6,7 @@ using SpendLensDatabase.Models.Entities;
 
 namespace SpendLensApi.Auth.RefreshTokens;
 
-public sealed class RefreshTokenService(SpendLensDbContext context)
+public sealed class RefreshTokenService(SpendLensDbContext context, ILogger<RefreshTokenService> logger)
 {
     public const string CookieName = "refreshToken";
     
@@ -56,7 +56,10 @@ public sealed class RefreshTokenService(SpendLensDbContext context)
                 cancellationToken);
 
         if (revoked == 0)
+        {
+            logger.LogWarning("Failed to rotate refresh token for user {UserId}", id);
             return new RefreshResult.ReuseOrNotFound();
+        }
 
         var userDto = await context.RefreshTokens
             .Where(t => t.Id == id)
@@ -78,6 +81,10 @@ public sealed class RefreshTokenService(SpendLensDbContext context)
         context.RefreshTokens.Add(newToken);
 
         await context.SaveChangesAsync(cancellationToken);
+        
+        logger.LogInformation(
+            "Refresh token rotated for user {UserId}",
+            userDto.Id);
 
         return new RefreshResult.Success(rawToken, userDto);
     }

@@ -15,20 +15,37 @@ public sealed class RefreshTokenAuthenticationHandler(
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!Request.Cookies.TryGetValue(RefreshTokenService.CookieName, out var rawToken))
+        if (!Request.Cookies.TryGetValue(
+                RefreshTokenService.CookieName,
+                out var rawToken))
+        {
             return AuthenticateResult.NoResult();
+        }
 
         if (string.IsNullOrWhiteSpace(rawToken))
+        {
+            Logger.LogDebug(
+                "Refresh token authentication failed: empty token");
+
             return AuthenticateResult.Fail("Bad credentials");
+        }
 
         try
         {
             var (identityId, verifyId) =
                 RefreshTokenGenerator.Split(rawToken);
 
-            if (!await refreshTokenService.ValidateAsync(identityId, verifyId, Context.RequestAborted))
+            if (!await refreshTokenService.ValidateAsync(
+                    identityId,
+                    verifyId,
+                    Context.RequestAborted))
+            {
+                Logger.LogDebug(
+                    "Refresh token authentication failed: invalid token");
+
                 return AuthenticateResult.Fail("Bad credentials");
-            
+            }
+
             var claims = new[]
             {
                 new Claim(
@@ -45,15 +62,25 @@ public sealed class RefreshTokenAuthenticationHandler(
             var ticket = new AuthenticationTicket(
                 principal,
                 Scheme.Name);
-            
+
+            Logger.LogDebug(
+                "Refresh token authentication succeeded for token {TokenId}",
+                identityId);
+
             return AuthenticateResult.Success(ticket);
         }
         catch (FormatException)
         {
+            Logger.LogDebug(
+                "Refresh token authentication failed: malformed token");
+
             return AuthenticateResult.Fail("Bad credentials");
         }
         catch (ArgumentException)
         {
+            Logger.LogDebug(
+                "Refresh token authentication failed: malformed token");
+
             return AuthenticateResult.Fail("Bad credentials");
         }
     }
