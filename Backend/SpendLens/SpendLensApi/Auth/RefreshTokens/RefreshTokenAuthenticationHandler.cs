@@ -35,16 +35,13 @@ public sealed class RefreshTokenAuthenticationHandler(
             var (identityId, verifyId) =
                 RefreshTokenGenerator.Split(rawToken);
 
-            if (!await refreshTokenService.ValidateAsync(
-                    identityId,
-                    verifyId,
-                    Context.RequestAborted))
-            {
-                Logger.LogDebug(
-                    "Refresh token authentication failed: invalid token");
+            var result = await refreshTokenService.ValidateAsync(
+                identityId,
+                verifyId,
+                Context.RequestAborted);
 
+            if (result is not RefreshTokenValidationResult.Success)
                 return AuthenticateResult.Fail("Bad credentials");
-            }
 
             var claims = new[]
             {
@@ -64,7 +61,7 @@ public sealed class RefreshTokenAuthenticationHandler(
                 Scheme.Name);
 
             Logger.LogDebug(
-                "Refresh token authentication succeeded for token {TokenId}",
+                "Refresh token authentication succeeded for token {RefreshTokenId}",
                 identityId);
 
             return AuthenticateResult.Success(ticket);

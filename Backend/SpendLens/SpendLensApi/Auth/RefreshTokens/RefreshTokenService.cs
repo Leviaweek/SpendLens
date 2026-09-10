@@ -28,22 +28,58 @@ public sealed class RefreshTokenService(SpendLensDbContext context, ILogger<Refr
         return rawToken;
     }
 
-    public async Task<bool> ValidateAsync(Guid id, Guid verifier, CancellationToken cancellationToken)
+    public async Task<RefreshTokenValidationResult> ValidateAsync(
+        Guid id,
+        Guid verifier,
+        CancellationToken cancellationToken)
     {
-        var token = await context.RefreshTokens.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
-        
-        if (token is null) 
-            return false;
+        var token = await context.RefreshTokens
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
-        if (token.RevokedAt is not null) 
-            return false;
+        if (token is null)
+        {
+            logger.LogDebug(
+                "Refresh token not found {RefreshTokenId}",
+                id);
 
-        if (token.ExpiresAt < DateTime.UtcNow)
-            return false;
-        
+            return new RefreshTokenValidationResult.NotFound();
+        }
+
+        var now = DateTime.UtcNow;
+
+        if (token.RevokedAt is not null)
+        {
+            if (now - token.RevokedAt < TimeSpan.FromMinutes(1))
+            {
+                await context.RefreshTokens
+                    .Where(rt => rt.UserId == token.UserId)
+                    .Where(rt => rt.RevokedAt == null)
+                    .ExecuteUpdateAsync(
+                        s => s.SetProperty(rt => rt.RevokedAt, now),
+                        cancellationToken);
+
+                logger.LogWarning(
+                    "Refresh token reuse detected; revoked all active refresh tokens for user {UserId}",
+                    token.UserId);
+
+                return new RefreshTokenValidationResult.ReuseDetected();
+            }
+
+            logger.LogDebug(
+                "Refresh token {RefreshTokenId} is revoked",
+                id);
+
+            return new RefreshTokenValidationResult.Invalid();
+        }
+
+        if (token.ExpiresAt < now)
+            return new RefreshTokenValidationResult.Invalid();
+
         var hash = SHA256.HashData(verifier.ToByteArray());
-        
-        return CryptographicOperations.FixedTimeEquals(hash, token.TokenHash);
+
+        return CryptographicOperations.FixedTimeEquals(hash, token.TokenHash)
+            ? new RefreshTokenValidationResult.Success()
+            : new RefreshTokenValidationResult.Invalid();
     }
 
     public async Task<RefreshResult> RotateAsync(Guid id, TimeSpan lifetime, CancellationToken cancellationToken)
@@ -57,7 +93,9 @@ public sealed class RefreshTokenService(SpendLensDbContext context, ILogger<Refr
 
         if (revoked == 0)
         {
-            logger.LogWarning("Failed to rotate refresh token for user {UserId}", id);
+            logger.LogWarning(
+                "Failed to rotate refresh token {RefreshTokenId}",
+                id);
             return new RefreshResult.ReuseOrNotFound();
         }
 
