@@ -28,8 +28,7 @@ file sealed class UserConfigure: IEntityTypeConfiguration<User>
             .IsUnique();
         
         builder.Property(u => u.PasswordHash)
-            .IsRequired()
-            .HasMaxLength(60);
+            .IsRequired();
         
         builder.Property(u => u.CreatedAt)
             .IsRequired()
