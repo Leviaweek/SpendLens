@@ -28,6 +28,26 @@ public sealed class RefreshTokenService(SpendLensDbContext context, ILogger<Refr
         return rawToken;
     }
 
+    /// <summary>
+    /// Validates a refresh token: exists, not revoked, not expired, hash matches.
+    /// <para>
+    /// If an already-revoked token is presented again within 1 minute of its revocation,
+    /// it's treated as a duplicate network retry — returns <see cref="RefreshTokenValidationResult.Invalid"/>
+    /// without side effects. If more than 1 minute has passed, it's treated as a suspected
+    /// token theft — all the user's currently active refresh tokens are revoked.
+    /// </para>
+    /// </summary>
+    /// <param name="id">The ID of the stored refresh token record.</param>
+    /// <param name="verifier">The verifier part of the token, compared against the stored hash.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// <see cref="RefreshTokenValidationResult.Success"/> if valid;
+    /// <see cref="RefreshTokenValidationResult.NotFound"/> if no token with this Id exists;
+    /// <see cref="RefreshTokenValidationResult.Invalid"/> if expired, hash mismatch, or revoked
+    /// less than a minute ago (treated as a benign retry);
+    /// <see cref="RefreshTokenValidationResult.ReuseDetected"/> if revoked more than a minute ago
+    /// (treated as suspected theft — triggers revoke-all).
+    /// </returns>
     public async Task<RefreshTokenValidationResult> ValidateAsync(
         Guid id,
         Guid verifier,
@@ -49,7 +69,7 @@ public sealed class RefreshTokenService(SpendLensDbContext context, ILogger<Refr
 
         if (token.RevokedAt is not null)
         {
-            if (now - token.RevokedAt < TimeSpan.FromMinutes(1))
+            if (now - token.RevokedAt > TimeSpan.FromMinutes(1))
             {
                 await context.RefreshTokens
                     .Where(rt => rt.UserId == token.UserId)
