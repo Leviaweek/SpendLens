@@ -1,0 +1,33 @@
+name: CI
+ 
+on:
+  push:
+    branches: [main]
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            context: ./Backend/SpendLens
+            dockerfile: ./Backend/SpendLens/SpendLensApi/Dockerfile
+          - name: worker
+            context: ./Worker
+            dockerfile: ./Worker/Dockerfile
+ 
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - uses: docker/setup-buildx-action@v3
+ 
+      - name: Build ${{ matrix.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          # scope разделяет кеш api и worker, иначе они бы затирали друг друга
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
