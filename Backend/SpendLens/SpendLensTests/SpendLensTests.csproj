@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="10.0.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+        <PackageReference Include="Respawn" Version="7.0.0" />
+        <PackageReference Include="Testcontainers" Version="4.15.0" />
+        <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="xunit.v3" Version="4.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.EntityFrameworkCore">
+        <HintPath>..\..\..\..\..\.nuget\packages\microsoft.entityframeworkcore\9.0.19\lib\net8.0\Microsoft.EntityFrameworkCore.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\SpendLensApi\SpendLensApi.csproj" />
+      <ProjectReference Include="..\SpendLensDatabase\SpendLensDatabase.csproj" />
+    </ItemGroup>
+
+</Project>
