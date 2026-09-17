@@ -78,8 +78,62 @@ public sealed class LoginTests: IAsyncLifetime
         
         var successLogin  = Assert.IsType<LoginResult.Success>(loginResult);
         
-        Assert.Equal(user.Email, successLogin.User.Email);
+        Assert.Equal(successRegister.User.Email, successLogin.User.Email);
         Assert.Equal(successRegister.User.Id, successLogin.User.Id);
+    }
+    
+    [Fact]
+    public async Task Login_WithDifferentEmailCase_ReturnsSuccess()
+    {
+        var (user, password) = UserFactory.CreateUser(email: "TestCase@example.com");
+        var organization = OrganizationFactory.CreateOrganization();
+        
+        var userModel = new UserModel(user.Email, password);
+        var organizationModel = new OrganizationModel(organization.Name);
+        var registrationModel = new RegistrationModel(userModel, organizationModel);
+        
+        var registerResult = await _registerService.RegisterAsync(registrationModel, RefreshTokenLifetime, _cancellationToken);
+        
+        var successRegister = Assert.IsType<RegisterResult.Success>(registerResult);
+        
+        Assert.Equal(successRegister.User.Email, user.Email.ToLowerInvariant());
+        
+        var loginResult = await _loginService.LoginAsync(userModel, RefreshTokenLifetime, _cancellationToken);
+        
+        var successLogin  = Assert.IsType<LoginResult.Success>(loginResult);
+        
+        Assert.Equal(successRegister.User.Email, successLogin.User.Email);
+        Assert.Equal(successRegister.User.Id, successLogin.User.Id);
+    }
+    
+    [Fact]
+    public async Task Login_WithIncorrectPassword_ReturnUnauthorized()
+    {
+        var (user, password) = UserFactory.CreateUser();
+        
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync(_cancellationToken);
+        
+        var userModel = new UserModel(user.Email, "Pasdasdasdas");
+        
+        var result = await _loginService.LoginAsync(userModel, RefreshTokenLifetime, _cancellationToken);
+        
+        Assert.IsType<LoginResult.Unauthorized>(result);
+    }
+    
+    [Fact]
+    public async Task Login_WithIncorrectEmail_ReturnUnauthorized()
+    {
+        var (user, password) = UserFactory.CreateUser();
+        
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync(_cancellationToken);
+        
+        var userModel = new UserModel("incorrect@example.com", password);
+        
+        var result = await _loginService.LoginAsync(userModel, RefreshTokenLifetime, _cancellationToken);
+        
+        Assert.IsType<LoginResult.Unauthorized>(result);
     }
 }
 
@@ -109,14 +163,14 @@ public static class UserFactory
 
 public static class OrganizationFactory
 {
-    public static Organization CreateOrganization()
+    public static Organization CreateOrganization(string? name = null)
     {
         var id = Guid.CreateVersion7();
         
         return new Organization
         {
             Id = id,
-            Name = id.ToString("N"),
+            Name = name ?? id.ToString("N"),
             CreatedAt = DateTime.UtcNow,
         };
     }
