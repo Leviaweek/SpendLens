@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SpendLensDatabase.Models;
 using SpendLensDatabase.Models.Entities;
 
 namespace SpendLensDatabase;
