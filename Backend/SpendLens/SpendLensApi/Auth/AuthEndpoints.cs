@@ -40,7 +40,7 @@ public static class AuthEndpoints
     {
         var jwt = jwtOptions.Value;
         
-        var result = await db.CreateAuthModelsAsync(request, 
+        var result = await db.RegisterAsync(request, 
             TimeSpan.FromDays(jwt.RefreshTokenExpirationDays),
             cancellationToken);
 

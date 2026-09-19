@@ -3,7 +3,6 @@ using Npgsql;
 using SpendLensApi.Auth.RefreshTokens;
 using SpendLensApi.Contracts.Users;
 using SpendLensDatabase;
-using SpendLensDatabase.Models;
 using SpendLensDatabase.Models.Entities;
 
 namespace SpendLensApi.Auth.Registration;
@@ -13,7 +12,7 @@ public sealed class RegistrationService(
     RefreshTokenService refreshTokenService,
     ILogger<RegistrationService> logger)
 {
-    public async Task<RegisterResult> CreateAuthModelsAsync(RegistrationModel data,
+    public async Task<RegisterResult> RegisterAsync(RegistrationModel data,
         TimeSpan refreshTokenLifetime,
         CancellationToken cancellationToken)
     {
